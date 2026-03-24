@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Work Cost" />
+  <meta name="theme-color" content="#0f0f0f" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>Work Cost</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface2: #222222;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.14);
+      --text: #f0ede8;
+      --text2: #888882;
+      --text3: #555550;
+      --accent: #e8d5a3;
+      --accent-dim: rgba(232,213,163,0.12);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    .app {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      padding: calc(var(--safe-top) + 32px) 20px calc(var(--safe-bottom) + 32px);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .screen { display: none; animation: fadeIn 0.3s ease; }
+    .screen.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .setup-eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
+    .setup-title { font-size: 30px; font-weight: 300; color: var(--text); line-height: 1.2; margin-bottom: 8px; }
+    .setup-title strong { font-weight: 500; }
+    .setup-desc { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 36px; }
+
+    .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 12px; }
+    .card-label { font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 16px; }
+
+    .big-num { font-size: 56px; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+    .big-unit { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+
+    input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 2px; background: var(--border2); border-radius: 99px; outline: none; cursor: pointer; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); cursor: pointer; border: none; }
+    .range-ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 8px; }
+
+    .input-wrap { display: flex; align-items: center; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); overflow: hidden; height: 48px; }
+    .input-prefix { font-family: 'DM Mono', monospace; font-size: 16px; color: var(--text2); padding: 0 14px; border-right: 0.5px solid var(--border); height: 100%; display: flex; align-items: center; background: var(--surface); }
+    .input-wrap input, .input-wrap select { flex: 1; background: transparent; border: none; outline: none; font-family: 'DM Mono', monospace; font-size: 16px; color: var(--text); padding: 0 14px; height: 100%; -webkit-appearance: none; }
+    .input-wrap select { cursor: pointer; }
+    .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .input-row .input-wrap { flex: 1; }
+
+    .btn { width: 100%; height: 52px; background: var(--accent); color: #0f0f0f; border: none; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 8px; transition: opacity 0.15s; letter-spacing: 0.01em; }
+    .btn:active { opacity: 0.8; }
+
+    .main-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 28px; }
+    .main-title { font-size: 22px; font-weight: 300; color: var(--text); }
+    .main-title strong { font-weight: 500; }
+    .edit-btn { font-size: 12px; color: var(--text3); background: none; border: none; cursor: pointer; font-family: 'DM Mono', monospace; letter-spacing: 0.04em; padding: 0; }
+
+    .section-label { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+
+    .result-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 24px 20px 20px; margin-top: 16px; animation: fadeIn 0.25s ease; }
+    .result-eyebrow { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+    .result-time { font-size: 32px; font-weight: 300; color: var(--text); line-height: 1.2; margin-bottom: 4px; }
+    .result-rate { font-size: 13px; color: var(--text2); font-family: 'DM Mono', monospace; margin-bottom: 20px; }
+
+    .bar-wrap { margin-bottom: 20px; }
+    .bar-track { height: 3px; background: var(--border2); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
+    .bar-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+    .bar-ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .stat { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px; }
+    .stat-label { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 6px; }
+    .stat-value { font-size: 19px; font-weight: 500; color: var(--text); font-family: 'DM Mono', monospace; }
+    .stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    .verdict { font-size: 14px; color: var(--text2); line-height: 1.6; padding: 14px 16px; background: var(--accent-dim); border-radius: var(--radius-sm); border-left: 2px solid var(--accent); }
+    .empty-hint { text-align: center; padding: 28px 0; font-size: 14px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SETUP SCREEN -->
+  <div class="screen active" id="screen-setup">
+    <div class="setup-eyebrow">First time setup</div>
+    <h1 class="setup-title">How do you<br><strong>work?</strong></h1>
+    <p class="setup-desc">Tell us your schedule once and we'll remember it. You can always change it later.</p>
+
+    <div class="card">
+      <div class="card-label">Hours per day</div>
+      <div class="big-num" id="s-hpd-val">8</div>
+      <div class="big-unit">hours of work</div>
+      <input type="range" id="s-hpd" min="1" max="16" value="8" step="1"
+        oninput="document.getElementById('s-hpd-val').textContent=this.value" />
+      <div class="range-ends"><span>1h</span><span>16h</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Days per week</div>
+      <div class="big-num" id="s-dpw-val">5</div>
+      <div class="big-unit">days of work</div>
+      <input type="range" id="s-dpw" min="1" max="7" value="5" step="1"
+        oninput="document.getElementById('s-dpw-val').textContent=this.value" />
+      <div class="range-ends"><span>1d</span><span>7d</span></div>
+    </div>
+
+    <button class="btn" onclick="saveSetup()">Let's go →</button>
+  </div>
+
+  <!-- MAIN SCREEN -->
+  <div class="screen" id="screen-main">
+    <div class="main-header">
+      <div class="main-title">Work<br><strong>Cost</strong></div>
+      <button class="edit-btn" onclick="goSetup()">edit schedule</button>
+    </div>
+
+    <div class="section-label">Your income</div>
+    <div class="input-row" style="margin-bottom:16px;">
+      <div class="input-wrap">
+        <div class="input-prefix">$</div>
+        <input type="number" id="income" inputmode="decimal" placeholder="1500" min="0" oninput="calc()" />
+      </div>
+      <div class="input-wrap" style="max-width:148px;">
+        <select id="period" onchange="calc()">
+          <option value="14">/ 2 weeks</option>
+          <option value="7">/ week</option>
+          <option value="1">/ day</option>
+          <option value="30">/ month</option>
+          <option value="365">/ year</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-label">Item price</div>
+    <div class="input-wrap" style="margin-bottom:0;">
+      <div class="input-prefix">$</div>
+      <input type="number" id="price" inputmode="decimal" placeholder="89.99" min="0" oninput="calc()" />
+    </div>
+
+    <div id="result-area">
+      <div class="empty-hint" style="margin-top:32px;">enter a price to see<br>what it costs in work</div>
+    </div>
+  </div>
+
+</div>
+<script>
+  let profile = { hpd: 8, dpw: 5 };
+
+  function loadProfile() {
+    try {
+      const raw = localStorage.getItem('wc_profile');
+      if (raw) profile = JSON.parse(raw);
+    } catch(e) {}
+  }
+
+  function saveSetup() {
+    profile.hpd = parseInt(document.getElementById('s-hpd').value);
+    profile.dpw = parseInt(document.getElementById('s-dpw').value);
+    try { localStorage.setItem('wc_profile', JSON.stringify(profile)); } catch(e) {}
+    show('screen-main');
+    calc();
+  }
+
+  function goSetup() {
+    document.getElementById('s-hpd').value = profile.hpd;
+    document.getElementById('s-hpd-val').textContent = profile.hpd;
+    document.getElementById('s-dpw').value = profile.dpw;
+    document.getElementById('s-dpw-val').textContent = profile.dpw;
+    show('screen-setup');
+  }
+
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function fmtTime(totalMins, hpd, dpw) {
+    const t = Math.round(totalMins);
+    const mpd = hpd * 60;
+    const mpw = dpw * mpd;
+    const weeks = Math.floor(t / mpw);
+    let rem = t % mpw;
+    const days = Math.floor(rem / mpd);
+    rem = rem % mpd;
+    const hours = Math.floor(rem / 60);
+    const mins = rem % 60;
+    const p = [];
+    if (weeks > 0) p.push(weeks + (weeks === 1 ? ' week' : ' weeks'));
+    if (days > 0) p.push(days + (days === 1 ? ' day' : ' days'));
+    if (hours > 0) p.push(hours + 'h');
+    if (mins > 0 && weeks === 0) p.push(mins + 'm');
+    return p.length > 0 ? p.join(', ') : '< 1 min';
+  }
+
+  function feel(pct) {
+    if (pct < 1) return 'Barely a blip — pocket change.';
+    if (pct < 5) return 'Pretty manageable. A small slice of your paycheck.';
+    if (pct < 15) return 'Worth a moment of thought — but probably doable.';
+    if (pct < 30) return 'A meaningful chunk. Sleep on it.';
+    if (pct < 50) return 'Nearly half a paycheck. Is it really worth it?';
+    if (pct < 100) return 'More than half your paycheck. Think carefully.';
+    return 'More than a full paycheck. Major purchase territory.';
+  }
+
+  function calc() {
+    const income = parseFloat(document.getElementById('income').value);
+    const period = parseFloat(document.getElementById('period').value);
+    const price = parseFloat(document.getElementById('price').value);
+    const ra = document.getElementById('result-area');
+
+    if (!income || !price || income <= 0 || price <= 0) {
+      ra.innerHTML = '<div class="empty-hint" style="margin-top:32px;">enter a price to see<br>what it costs in work</div>';
+      return;
+    }
+
+    const dailyIncome = income / period;
+    const hourlyRate = dailyIncome / profile.hpd;
+    const minsNeeded = (price / hourlyRate) * 60;
+    const pct = (price / income) * 100;
+    const barW = Math.min(pct, 100).toFixed(1);
+    const timeStr = fmtTime(minsNeeded, profile.hpd, profile.dpw);
+
+    ra.innerHTML = `
+      <div class="result-card">
+        <div class="result-eyebrow">this costs you</div>
+        <div class="result-time">${timeStr}</div>
+        <div class="result-rate">@ $${hourlyRate.toFixed(2)} / hr</div>
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill" style="width:${barW}%"></div></div>
+          <div class="bar-ends">
+            <span>$0</span>
+            <span>${pct > 100 ? Math.round(pct) + '% of paycheck' : '$' + Number(income).toLocaleString() + ' paycheck'}</span>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-label">of paycheck</div>
+            <div class="stat-value">${pct < 1 ? pct.toFixed(1) : Math.round(pct)}%</div>
+            <div class="stat-sub">$${Number(income).toLocaleString()} base</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">hourly rate</div>
+            <div class="stat-value">$${hourlyRate.toFixed(2)}</div>
+            <div class="stat-sub">$${dailyIncome.toFixed(2)} / day</div>
+          </div>
+        </div>
+        <div class="verdict">${feel(pct)}</div>
+      </div>`;
+  }
+
+  loadProfile();
+  if (localStorage.getItem('wc_profile')) {
+    show('screen-main');
+    calc();
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
